@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>サッカーファンタイプ診断</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #0f766e;
+      color: #1e293b;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 16px;
+    }
+    .card {
+      background: #fff;
+      width: 100%;
+      max-width: 500px;
+      padding: 28px 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    h1 { color: #0f766e; font-size: 1.4rem; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      background: #0f766e;
+      color: #fff;
+    }
+    .btn:hover { opacity: 0.9; }
+    .opt {
+      background: #f8fafc;
+      color: #1e293b;
+      border: 2px solid #e2e8f0;
+      text-align: left;
+      font-weight: normal;
+    }
+    .opt:hover { border-color: #0f766e; background: #f0fdfa; }
+    .box {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 10px;
+      text-align: left;
+      margin: 16px 0;
+      border-left: 4px solid #f59e0b;
+      line-height: 1.6;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <!-- スタート画面 -->
+    <div id="start">
+      <h1>⚽ サッカーファンタイプ診断</h1>
+      <p>5つの質問であなたの観戦スタイルを診断します！</p>
+      <button class="btn" onclick="start()">診断スタート</button>
+    </div>
+
+    <!-- 質問画面 -->
+    <div id="quiz" class="hidden">
+      <p id="q-num" style="color:#0f766e; font-weight:bold;"></p>
+      <h2 id="q-text" style="font-size:1.2rem;"></h2>
+      <div id="options"></div>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result" class="hidden">
+      <div id="r-icon" style="font-size:3.5rem;"></div>
+      <h2 id="r-type" style="color:#0f766e;"></h2>
+      <div class="box">
+        <p id="r-desc"></p>
+        <p id="r-point" style="font-weight:bold; color:#0f766e;"></p>
+      </div>
+      <button class="btn" style="background:#0f172a;" onclick="share()">Xで結果をシェア</button>
+      <button class="btn" style="background:#64748b;" onclick="show('start')">もう一度診断する</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { q: "試合で一番テンションが上がる瞬間は？", a: ["劇的なゴールが決まった瞬間！", "戦術やプレスがハマった瞬間！", "推し選手が大活躍した瞬間！", "お酒やグルメを楽しみながら見る時間！"] },
+      { q: "スタジアム観戦で重視したいことは？", a: ["ゴール裏で声を張り上げて応援", "ピッチ全体が見渡せる上層階の席", "選手が近くで見られるベンチ周辺", "スタグルやイベントなどお祭り気分"] },
+      { q: "試合後についついやってしまうことは？", a: ["SNSでサポーターと喜びや悔しさを共有", "戦術分析やスタッツを見返す", "選手のインタビューやオフショット検索", "ハイライトだけ見て気持ちよく寝る"] },
+      { q: "サッカーニュースで一番気になる話題は？", a: ["優勝争いや順位の行方", "新監督の戦術やフォーメーション", "スター選手の移籍やプライベート", "W杯や日本代表などのビッグイベント"] },
+      { q: "あなたにとってサッカーの魅力とは？", a: ["人生を懸けて熱くなれる最高のドラマ", "90分間続く奥深い頭脳戦", "スターが輝く最高のエンタメ", "仲間と盛り上がれるコミュニケーション"] }
+    ];
+
+    const results = [
+      { icon: "🔥", type: "魂の熱狂サポータータイプ", desc: "チームの勝利が何よりの栄養源！声と拍手で選手を後押しする熱いハートの持ち主です。", point: "おすすめ：現地スタジアムのゴール裏やスポーツバー！" },
+      { icon: "🧠", type: "ピッチの戦術アナリストタイプ", desc: "陣形や監督の意図を読み解きながら90分間を楽しむ知性派ファンです。", point: "おすすめ：ピッチ全体が見える2階席や戦術カメラ映像！" },
+      { icon: "✨", type: "愛と情熱の推し活ストライカータイプ", desc: "選手個人の人柄やストーリーに惹かれ、ピッチ内外の情報を追うのが至福の時間です。", point: "おすすめ：練習見学やファン感謝デー、選手別ハイライト！" },
+      { icon: "🍻", type: "エンジョイ・お祭りエンタメタイプ", desc: "勝ち負け以上にサッカーという空間やイベントそのものを楽しむ達人です。", point: "おすすめ：グルメ充実のナイトゲームや自宅パーティー観戦！" }
+    ];
+
+    let step = 0, scores =, topIdx = 0;
+
+    // 画面切り替えを1つの関数に集約
+    const show = id => ["start", "quiz", "result"].forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id));
+
+    function start() {
+      step = 0;
+      scores =;
+      show("quiz");
+      render();
+    }
+
+    function render() {
+      const item = questions[step];
+      document.getElementById("q-num").textContent = `Q${step + 1} / ${questions.length}`;
+      document.getElementById("q-text").textContent = item.q;
+      // 選択肢ボタンの生成を1行で記述
+      document.getElementById("options").innerHTML = item.a.map((text, i) => 
+        `<button class="btn opt" onclick="answer(${i})">${text}</button>`
+      ).join("");
+    }
+
+    function answer(i) {
+      scores[i]++;
+      if (++step < questions.length) return render();
+      
+      topIdx = scores.indexOf(Math.max(...scores));
+      const r = results[topIdx];
+      document.getElementById("r-icon").textContent = r.icon;
+      document.getElementById("r-type").textContent = r.type;
+      document.getElementById("r-desc").textContent = r.desc;
+      document.getElementById("r-point").textContent = r.point;
+      show("result");
+    }
+
+    const share = () => window.open(`https://twitter.com{encodeURIComponent(`私のサッカーファンタイプは【${results[topIdx].type}】でした！⚽️ #サッカーファン診断`)}`);
+  </script>
+</body>
+</html>
